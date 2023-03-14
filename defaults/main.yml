@@ -1,0 +1,23 @@
+---
+# Jumphost configuration
+ansible_user_dir: "{{ lookup('env', 'USER') }}"
+ssh_config_folder: ".ssh"
+ssh_config_path: "{{ ansible_user_dir }}/{{ ssh_config_folder }}"
+
+# Default ssh_key
+ssh_key_path: "{{ ansible_user_dir }}/{{ ssh_config_folder }}/id_rsa"
+ssh_config_name: "ssh-config"
+
+ssh_auth_identity: true
+
+project_name: "default"
+
+manual_mode: false
+
+jumpserver:
+  hostname: default
+  ip: 127.0.0.1
+  user: default
+
+group_blacklist: []
+server_blacklist: []

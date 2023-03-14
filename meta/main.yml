@@ -1,0 +1,35 @@
+---
+galaxy_info:
+  author: Stefan Machmeier
+  description: Ansible role to setup SSH configurations based on ansible inventories.
+  license: EUPL1.2
+  role_name: ssh_config
+  namespace: bwinfosec
+
+  min_ansible_version: "2.5"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - buster
+        - jessie
+        - stretch
+    - name: EL
+      versions:
+        - "8"
+        - "7"
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+        - bionic
+        - xenial
+
+  galaxy_tags:
+    - ssh
+    - config
+
+collections: []
+
+dependencies: []

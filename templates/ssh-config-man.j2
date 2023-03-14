@@ -1,0 +1,44 @@
+{{ ansible_managed | comment }}
+# commit: {{ lookup('pipe', 'git rev-parse --short HEAD') }}
+# {{ project_name }}
+
+# set jumpserver
+Host {{ jumpserver['hostname'] }}
+    HostName {{ jumpserver['ip'] }}
+    User {{ jumpserver['user'] }}
+    {% if ssh_auth_identity %}
+
+    IdentitiesOnly true
+    IdentityFile {{ ssh_key_path }}
+    {% endif %}
+
+    StrictHostKeyChecking no
+
+    ServerAliveInterval 300
+    ServerAliveCountMax 2
+
+    ControlMaster auto
+    ControlPath ~/.ssh/ansible-%r@%h:%p
+    ControlPersist 5m
+
+
+{% for group in groups | reject('eq', 'jumpserver') | reject('eq','all') | reject('eq','no_auto_ssh') | reject('eq','windows_server') %}
+{% for server in groups[group] %}
+Host {{ hostvars[server]['ansible_host'] }}
+    HostName {{ hostvars[server]['ansible_host'] }}
+    User {{ hostvars[server]['ansible_user'] }}
+    {% if ssh_auth_identity %}
+
+    IdentitiesOnly true
+    IdentityFile {{ ssh_key_path }}
+    {% endif %}
+
+    ServerAliveInterval 300
+    ServerAliveCountMax 2
+
+    UserKnownHostsFile=/dev/null
+    StrictHostKeyChecking no
+    ProxyCommand ssh {{ jumpserver['hostname'] }} -W %h:%p
+
+{% endfor %}
+{% endfor -%}

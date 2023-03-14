@@ -1,0 +1,64 @@
+---
+- name: Check if ssh folder exists
+  ansible.builtin.stat:
+    path: "{{ ssh_config_path }}"
+  register: ssh_folder
+
+- name: Assert that SSH key path exists
+  ansible.builtin.stat:
+    path: "{{ ssh_key_path }}"
+  register: ssh_key
+  failed_when: not ssh_key.stat.exists
+
+- name: Creates directory
+  ansible.builtin.file:
+    path: "{{ ssh_config_path }}"
+    state: directory
+    mode: 0700
+  when: not ssh_folder.stat.exists
+
+- name: "Mode: inventory"
+  block:
+    - name: "Creates project relevant ssh-config (mode: inventory)"
+      ansible.builtin.template:
+        src: ssh-config-inv.j2
+        dest: "{{ ssh_config_path }}/ansible-managed-ssh-config-{{ project_name }}"
+        backup: false
+        mode: 0644
+      register: template_return
+      ignore_errors: true
+
+    - name: Fail if inventory does not contain exactly one jumpserver (indicated by ZeroDivisionError)
+      ansible.builtin.fail:
+        msg: "Exactly one host in inventory group 'jumpserver' must be definend!"
+      when:
+        - template_return.failed
+        - '"ZeroDivisionError" in template_return.msg'
+
+    - name: Fail if there was another error while executing the template
+      ansible.builtin.fail:
+        msg: "{{ template_return.msg }}"
+      when:
+        - template_return.failed
+        - '"ZeroDivisionError" not in template_return.msg'
+  when: not manual_mode
+
+- name: "Creates project relevant ssh-config (mode: manual)"
+  ansible.builtin.template:
+    src: ssh-config-man.j2
+    dest: "{{ ssh_config_path }}/ansible-managed-ssh-config-{{ project_name }}"
+    backup: false
+    mode: 0644
+  when: manual_mode
+
+- name: Insert into ssh-config, if exists
+  ansible.builtin.lineinfile:
+    path: "{{ ssh_config_path }}/{{ ssh_config_name }}"
+    line: "{{ item }}"
+    state: present
+    mode: 0644
+    create: true
+    backup: true
+  loop:
+    - "Match all"
+    - "Include {{ ssh_config_path }}/ansible-managed-ssh-config-{{ project_name }}"
